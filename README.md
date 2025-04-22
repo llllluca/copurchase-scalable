@@ -3,8 +3,9 @@ Co-purchase analysis project for Scalable and Cloud Programming course at Univer
 
 Install thirdparty dependencies: ./scripts/fetch-thirdparty.sh
 Build the project: ./scripts/build.sh
-Upload the jar of project on the cloud bucket: ./scripts/bucket-cp.sh ./build/Hello.jar
+Upload the jar of project on the cloud bucket: ./scripts/bucket-cp.sh build/Hello.jar
 Create the cluster: ./scripts/create-cluster.sh
 Submit the job executing the project: ./scripts/create-cluster.sh
 Delete the cluster: ./scripts/delete-cluster.sh
+Execute locally: ./thirdparty/spark-3.5.3-bin-hadoop3/bin/spark-submit build/Hello.jar
 

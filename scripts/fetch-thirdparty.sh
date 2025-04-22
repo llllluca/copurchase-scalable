@@ -15,7 +15,7 @@ tar xvf scala-${SCALA_VERSION}.tgz
 #tar xf v3.5.4.tar.gz
 #./thirdparty/spark-3.5.4/build/mvn -DskipTests clean package
 
-wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-without-hadoop.tgz
-tar xvf spark-${SPARK_VERSION}-bin-without-hadoop.tgz
+wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz
+tar xvf spark-${SPARK_VERSION}-bin-hadoop3.tgz
 
 cd $PWD
