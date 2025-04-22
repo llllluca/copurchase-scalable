@@ -10,7 +10,7 @@ SCALA_VERSION="2.12.18"
 
 SCALAC="${THIRDPARTY}/scala-${SCALA_VERSION}/bin/scalac"
 GCLOUD="${THIRDPARTY}/google-cloud-sdk/bin/gcloud"
-SPARK_JARS="${THIRDPARTY}/spark-${SPARK_VERSION}-bin-without-hadoop/jars"
+SPARK_JARS="${THIRDPARTY}/spark-${SPARK_VERSION}-bin-hadoop3/jars"
 
 CLOUD_STORAGE_BUCKET="gs://scalable-project-bucket"
 CLUSTER_NAME="rosita"
