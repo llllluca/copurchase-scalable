@@ -3,7 +3,8 @@
 #https://stackoverflow.com/questions/73298692/how-to-compile-a-scala-program-without-any-builder
 
 PWD="$(pwd)"
-. "${PWD}/$(dirname $0)/config.sh"
+SCRIPT_HOME="$(realpath $(dirname $0))"
+. ${SCRIPT_HOME}/config.sh
 mkdir -p build/
 $SCALAC -cp  $SPARK_JARS -extdirs $SPARK_JARS -d $BUILD CoPurchaseAnalysis.scala
 

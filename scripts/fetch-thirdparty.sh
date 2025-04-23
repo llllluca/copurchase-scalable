@@ -1,7 +1,8 @@
 #!/bin/sh
 
 PWD=$(pwd)
-. "${PWD}/$(dirname $0)/config.sh"
+SCRIPT_HOME="$(realpath $(dirname $0))"
+. ${SCRIPT_HOME}/config.sh
 mkdir -p $THIRDPARTY
 cd $THIRDPARTY
 
