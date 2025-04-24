@@ -1,19 +1,18 @@
 #!/bin/sh
 
-set -e
-
 SCRIPT_HOME="$(realpath $(dirname $0))"
 . ${SCRIPT_HOME}/config.sh
-workers=2
+
+WORKERS=1
 
 usage() {
-    echo "Usage: $0 [--num-workers=[2-9]]"
+    echo "Usage: $0 [--num-workers=[1-9]]"
 }
 
 for opt in "$@"; do
     case $opt in
-        --num-workers=[2-9]) 
-            workers=$(echo $opt | sed 's/[^=]*=//')
+        --num-workers=[1-9]) 
+            WORKERS=$(echo $opt | sed 's/[^=]*=//')
             ;;
         *) 
             echo "Error: \`${opt}' is an invalid option." >&2
@@ -23,7 +22,22 @@ for opt in "$@"; do
     esac
 done
 
-$GCLOUD dataproc clusters create $CLUSTER_NAME --region $CLUSTER_REGION \
---num-workers $workers --master-boot-disk-size 240 --worker-boot-disk-size 240 \
---image-version $CLUSTER_IMAGE_VERSION
+COMMON_PARAMS="\
+    --region ${CLUSTER_REGION} \
+    --master-boot-disk-size ${MASTER_DISK_SIZE} \
+    --worker-boot-disk-size ${WORKER_DISK_SIZE} \
+    --image-version ${CLUSTER_IMAGE_VERSION} \
+    --worker-machine-type ${WORKER_MACHINE} \
+    --master-machine-type ${MASTER_MACHINE}"
+
+
+if [ "$WORKERS" -eq 1 ]; then
+    $GCLOUD dataproc clusters create $CLUSTER_NAME \
+        $COMMON_PARAMS \
+        --single-node
+else
+    $GCLOUD dataproc clusters create $CLUSTER_NAME \
+        $COMMON_PARAMS \
+        --num-workers $WORKERS
+fi
 

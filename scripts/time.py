@@ -1,10 +1,15 @@
 #!/bin/python3
 
+import sys
 from datetime import datetime
+import json
+
+with open(sys.argv[1]) as f:
+    summary = json.load(f)
 
 # Define the two timestamps
-timestamp1 = "2025-04-23T08:42:04.359896Z"
-timestamp2 = "2025-04-23T08:42:28.221787Z"
+timestamp1 = summary["statusHistory"][0]["stateStartTime"]
+timestamp2 = summary["status"]["stateStartTime"]
 
 # Parse the timestamps into datetime objects
 fmt = "%Y-%m-%dT%H:%M:%S.%fZ"

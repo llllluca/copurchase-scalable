@@ -2,4 +2,4 @@
 
 SCRIPT_HOME="$(realpath $(dirname $0))"
 . ${SCRIPT_HOME}/config.sh
-$GCLOUD dataproc clusters delete $CLUSTER_NAME  --region $CLUSTER_REGION --quiet
+$GCLOUD dataproc clusters delete $CLUSTER_NAME --region $CLUSTER_REGION --quiet

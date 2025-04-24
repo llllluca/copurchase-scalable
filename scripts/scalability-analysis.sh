@@ -8,12 +8,12 @@ summary_file=""
 workers=""
 
 usage() {
-    echo "Usage: $0 --workers=[2-9]"
+    echo "Usage: $0 --workers=[1-9]"
 }
 
 for opt in "$@"; do
     case $opt in
-        --workers=[2-9]) 
+        --workers=[1-9]) 
             workers=$(echo $opt | sed 's/[^=]*=//')
             ;;
         *) 
@@ -31,13 +31,13 @@ if [ -z "$workers" ]; then
 fi
 
 output_dir=output_${workers}_workers/
-summary_file=summary_${workers}_workers.txt
+summary_file=summary_${workers}_workers.json
 
-echo "[INFO]: deleting old cluster if it is still active."
-${SCRIPT_HOME}/delete-cluster.sh
+#echo "[INFO]: deleting old cluster if it is still active."
+#${SCRIPT_HOME}/delete-cluster.sh
 
-echo "[INFO]: uploading ${INPUT_FILE}."
-${SCRIPT_HOME}/bucket-upload.sh dataset/$INPUT_FILE
+#echo "[INFO]: uploading ${INPUT_FILE}."
+#${SCRIPT_HOME}/bucket-upload.sh dataset/$INPUT_FILE
 
 echo "[INFO]: creating cluster with ${workers} workers."
 ${SCRIPT_HOME}/create-cluster.sh --num-workers=$workers

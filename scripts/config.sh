@@ -14,7 +14,15 @@ SPARK_JARS="${THIRDPARTY}/spark-${SPARK_VERSION}-bin-hadoop3/jars"
 
 CLOUD_STORAGE_BUCKET="gs://scalable-project-bucket"
 CLUSTER_NAME="rosita"
-CLUSTER_REGION="us-central1"
+#CLUSTER_REGION="us-central1"
+CLUSTER_REGION="us-west1"
+
+#n1-standard-4: 4 vCPU, 4 GB memory per vCPU (16 GB), N1 series machine
+WORKER_MACHINE=n1-standard-4
+MASTER_MACHINE=n1-standard-4 
+WORKER_DISK_SIZE=240
+MASTER_DISK_SIZE=240
+
 
 
 
