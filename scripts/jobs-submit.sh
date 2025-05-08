@@ -1,11 +1,12 @@
 #!/bin/sh
 
 usage() {
-    echo "Usage: $0 [--input-file=FILEPATH] [--output-file=FILEPATH]"
+    echo "Usage: $0 --partitions=N --input-file=FILEPATH [--output-file=FILEPATH]"
 }
 
-input_file="toy_dataset.csv"
+input_file=""
 output_dir="output/"
+partitions=""
 
 for opt in "$@"; do
     case $opt in
@@ -14,6 +15,9 @@ for opt in "$@"; do
             ;;
         --output-dir=*) 
             output_dir=$(echo $opt | sed 's/[^=]*=//')
+            ;;
+        --partitions=[1-9][0-9]*)
+            partitions=$(echo $opt | sed 's/[^=]*=//')
             ;;
 
         *) 
@@ -24,7 +28,19 @@ for opt in "$@"; do
     esac
 done
 
-# See https://spark.apache.org/docs/3.5.3/configuration.html#available-properties
+if [ -z "$input_file" ]; then
+    echo "Missing input file." >&2
+    usage $0 >&2
+    exit 1
+fi
+
+if [ -z "$partitions" ]; then
+    echo "Missing partitions number." >&2
+    usage $0 >&2
+    exit 1
+fi
+
+# https://spark.apache.org/docs/3.5.3/configuration.html#available-properties
 # https://sparkbyexamples.com/spark/what-is-spark-executor/
 # https://sparkbyexamples.com/spark/difference-between-spark-driver-vs-executor/
 # When a Spark driver program submits a task to a cluster, it is divided into smaller
@@ -50,5 +66,5 @@ $GCLOUD dataproc jobs submit spark --cluster $CLUSTER_NAME --region $CLUSTER_REG
 --format json \
 --properties="spark.executor.memory=6g,spark.executor.cores=4,spark.driver.memory=4g" \
 --jar ${CLOUD_STORAGE_BUCKET}/CoPurchaseAnalysis.jar \
--- ${CLOUD_STORAGE_BUCKET}/${input_file} ${CLOUD_STORAGE_BUCKET}/${output_dir}
+-- $partitions ${CLOUD_STORAGE_BUCKET}/${input_file} ${CLOUD_STORAGE_BUCKET}/${output_dir}
 

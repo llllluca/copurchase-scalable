@@ -24,11 +24,12 @@ done
 
 COMMON_PARAMS="\
     --region ${CLUSTER_REGION} \
-    --master-boot-disk-size ${MASTER_DISK_SIZE} \
-    --worker-boot-disk-size ${WORKER_DISK_SIZE} \
+    --enable-component-gateway \
+    --master-boot-disk-size ${DISK_SIZE_GB} \
+    --worker-boot-disk-size ${DISK_SIZE_GB} \
     --image-version ${CLUSTER_IMAGE_VERSION} \
-    --worker-machine-type ${WORKER_MACHINE} \
-    --master-machine-type ${MASTER_MACHINE}"
+    --worker-machine-type ${MACHINE_TYPE} \
+    --master-machine-type ${MACHINE_TYPE}"
 
 
 if [ "$WORKERS" -eq 1 ]; then
