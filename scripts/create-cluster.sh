@@ -23,8 +23,9 @@ for opt in "$@"; do
 done
 
 COMMON_PARAMS="\
-    --region ${CLUSTER_REGION} \
     --enable-component-gateway \
+    --region ${CLUSTER_REGION} \
+    --zone ${CLUSTER_ZONE} \
     --master-boot-disk-size ${DISK_SIZE_GB} \
     --worker-boot-disk-size ${DISK_SIZE_GB} \
     --image-version ${CLUSTER_IMAGE_VERSION} \

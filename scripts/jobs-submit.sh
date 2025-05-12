@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage() {
-    echo "Usage: $0 --partitions=N --input-file=FILEPATH [--output-file=FILEPATH]"
+    echo "Usage: $0 --partitions=N --input-file=FILEPATH [--output-dir=FILEPATH]"
 }
 
 input_file=""
@@ -16,7 +16,7 @@ for opt in "$@"; do
         --output-dir=*) 
             output_dir=$(echo $opt | sed 's/[^=]*=//')
             ;;
-        --partitions=[1-9][0-9]*)
+        --partitions=[0-9]*)
             partitions=$(echo $opt | sed 's/[^=]*=//')
             ;;
 
@@ -30,12 +30,6 @@ done
 
 if [ -z "$input_file" ]; then
     echo "Missing input file." >&2
-    usage $0 >&2
-    exit 1
-fi
-
-if [ -z "$partitions" ]; then
-    echo "Missing partitions number." >&2
     usage $0 >&2
     exit 1
 fi
@@ -60,11 +54,29 @@ fi
 # the overall workflow of the Spark application.
 #
 # spark.driver.memory=4g: the amount of memory to allocate for the driver
+#
 SCRIPT_HOME="$(realpath $(dirname $0))"
 . ${SCRIPT_HOME}/config.sh
-$GCLOUD dataproc jobs submit spark --cluster $CLUSTER_NAME --region $CLUSTER_REGION \
---format json \
---properties="spark.executor.memory=6g,spark.executor.cores=4,spark.driver.memory=4g" \
---jar ${CLOUD_STORAGE_BUCKET}/CoPurchaseAnalysis.jar \
--- $partitions ${CLOUD_STORAGE_BUCKET}/${input_file} ${CLOUD_STORAGE_BUCKET}/${output_dir}
+
+#SPARK_PROPERTIES="spark.executor.memory=6g,spark.executor.cores=4,spark.driver.memory=4g"
+SPARK_PROPERTIES="spark.executor.memory=6g,spark.driver.memory=4g"
+COMMON_PARAMS="\
+    --cluster ${CLUSTER_NAME} \
+    --region ${CLUSTER_REGION} \
+    --properties=${SPARK_PROPERTIES} \
+    --format json"
+
+if [ -z "$partitions" ]; then
+    $GCLOUD dataproc jobs submit spark \
+        $COMMON_PARAMS \
+        --jar ${CLOUD_STORAGE_BUCKET}/CoPurchaseAnalysisNoPartitioning.jar \
+        -- ${CLOUD_STORAGE_BUCKET}/${input_file} ${CLOUD_STORAGE_BUCKET}/${output_dir}
+else
+    $GCLOUD dataproc jobs submit spark \
+        $COMMON_PARAMS \
+        --jar ${CLOUD_STORAGE_BUCKET}/CoPurchaseAnalysis.jar \
+        -- $partitions ${CLOUD_STORAGE_BUCKET}/${input_file} ${CLOUD_STORAGE_BUCKET}/${output_dir}
+fi
+
+
 

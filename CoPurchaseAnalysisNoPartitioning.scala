@@ -2,22 +2,20 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.HashPartitioner
 
-object CoPurchaseAnalysis {
+object CoPurchaseAnalysisNoPartitioning {
     def main(args: Array[String]): Unit = {
 
-        val configuration = new SparkConf().setAppName("CoPurchaseAnalysis")
+        val configuration = new SparkConf().setAppName("CoPurchaseAnalysisNoPartitioning")
         val sc = new SparkContext(configuration)
 
-        val partitionsNumber = args(0).toInt
-        val inputPath = args(1)
-        val outputPath = args(2)
+        val inputPath = args(0)
+        val outputPath = args(1)
 
         val orderIdProductIdPairs = sc.textFile(inputPath)
             .map(line => line.split(","))
             .map(array2 => (array2(0).toInt, array2(1).toInt))
 
         val prod1IdProd2IdCountTriples = orderIdProductIdPairs
-          .partitionBy(new HashPartitioner(partitionsNumber))
           .groupByKey()
           .flatMap(p => 
               for {

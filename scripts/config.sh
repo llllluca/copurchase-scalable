@@ -14,12 +14,14 @@ SPARK_JARS="${THIRDPARTY}/spark-${SPARK_VERSION}-bin-hadoop3/jars"
 
 CLOUD_STORAGE_BUCKET="gs://scalable-project-bucket"
 CLUSTER_NAME="rosita"
-CLUSTER_REGION="us-west1"
+CLUSTER_REGION="europe-west2"
+
+CLUSTER_ZONE="europe-west2-c"
 
 # https://cloud.google.com/compute/docs/machine-resource
 # n1-standard-4: 4 vCPU, 4 GB memory per vCPU (16 GB), N1 series machine
-MACHINE_TYPE=n1-standard-4
+MACHINE_TYPE="n1-standard-4"
 MACHINE_CORE=4
 MACHINE_MEMORY_GB=16
-DISK_SIZE_GB=240
+DISK_SIZE_GB=400
 
