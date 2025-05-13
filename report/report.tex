@@ -1,0 +1,99 @@
+\documentclass{article}
+
+\usepackage[italian]{babel}
+\usepackage{a4wide}
+
+\title{Scalable and Cloud Programming\\Co-purchase Analysis}
+\author{Luca Orlandello, ID 0001136759}
+
+\begin{document}
+\maketitle
+
+\section{Descrizione del problema e lavoro svolto}
+L’obiettivo del progetto è quello di realizzare una implementazione in Scala-Spark di un'analisi di co-acquisto di prodotti su un dataset di acquisti.
+L'analisi di co-acquisto consiste nel calcolare il numero di volte in cui due prodotti fanno entrambi parte di un medesimo ordine di acquisto.
+Tutto il codice del progetto è disponibile al seguente repository GitHub\\
+\verb|https://github.com/llllluca/copurchase-scalable|.
+
+In sezione \ref{sec:approccio-utilizzato} è descritto l'implementazione del codice dell'analisi di co-acquisto del progetto mentre nelle sezioni \ref{sec:analisi-scalabilita} e \ref{sec:discussione-e-conclusioni} sono presentati e discussi di risultati dell'analisi di scalabilità.
+
+\section{Approccio utilizzato} \label{sec:approccio-utilizzato}
+Sono state implementate due versioni dello stesso codice: \verb|CoPurchaseAnalysisNoPartitioning| e \verb|CoPurchaseAnalysis|.
+La prima versione non utilizza nessun partitioner mentre la seconda versione è esattamente lo stesso codice della prima ma con l'aggiunta di partitioner.
+Di seguito sono spiegate più in dettaglio le due implementazioni.
+
+In \verb|CoPurchaseAnalysisNoPartitioning| come prima cosa viene fatto parsing del dataset in formato csv in input ottenendo un RDD di coppie $(IdOrdine, IdProdotto)$, chiamiamo\\ \verb|orderIdProductId| questo RDD. Successivamente viene eseguito questo snippet di codice Scala-Spark.
+\begin{verbatim}
+val prod1IdProd2IdCounter = orderIdProductId.groupByKey()
+    .flatMap(p => for (x <- p._2; y <- p._2; if x < y) yield ((x, y), 1))
+\end{verbatim}
+La \verb|groupByKey| trasforma \verb|orderIdProductId| in un nuovo RDD di coppie $(IdOrdine, l)$ dove $l$ è una collection iterabile di tutti e soli gli identificati di prodotti che appartengono allo stesso ordine.
+La successiva \verb|flatMap| produce un RDD di coppie $((IdProdotto1, IdProdotto2), 1)$ dove la prima componente della coppia è a sua volta una coppia di identificativi di prodotti che appartengono allo stesso ordine, mentre la seconda componente della coppia è un contatore inizializzato a 1.
+La condizione \verb|x < y| nella for expression evita la creazione di coppie $((IdProdotto1, IdProdotto2), 1)$ con $IdProdotto1$ uguale a $IdProdotto2$ e poiché l'ordine degli identificativi dei due prodotti non è rilevante, evita anche la creazione di entrambe le coppie $((IdProdotto1, IdProdotto2), 1)$ e $((IdProdotto2, IdProdotto1), 1)$.
+Infine è stata applicata una \verb|reduceByKey(_ + _)| ottenendo così un RDD di coppie $((IdProdotto1, IdProdotto2), Freq)$ dove $Freq$ è la frequenza di quante volte $IdProdotto1$ e $IdProdotto2$ sono stati acquistati nello stesso ordine di acquisto.
+
+\verb|CoPurchaseAnalysis| è esattamente uguale a \verb|CoPurchaseAnalysisNoPartitioning| tranne per fatto che prima della \verb|groupByKey| viene applicato al RDD un partizionamento tramite un \verb|HashPartitioner|. Il precedente snippet di codice viene modificato come segue.
+\newpage
+\begin{verbatim}
+val prod1IdProd2IdCounter = orderIdProductId
+    .partitionBy(new HashPartitioner(partitionsNumber))
+    .groupByKey()
+    .flatMap(p => for (x <- p._2; y <- p._2; if x < y) yield ((x, y), 1))
+\end{verbatim}
+Il numero di partizioni \verb|partitionsNumber| è impostato a 2x il numero totale di core nel cluster.
+Impostare il numero di partizioni come il numero totale di core nel cluster per una costante moltiplicativa è suggerito nel articolo al seguente link\footnote{https://engineering.salesforce.com/how-to-optimize-your-apache-spark-application-with-partitions-257f2c1bb414/}.
+Nell'articolo è suggerito di impostare il numero di partizioni a 3x in numero totale di core nel cluster ma provando per tentativi, in questo specifico caso, moltiplicare per 2 ha prodotto tempi di esecuzione leggermente più bassi e per questo è stato scelto.
+È stato utilizzato un \verb|HashPartitioner| per fare in modo che coppie $(IdOrdine, IdProdotto)$ con lo stesso $IdOrdine$ siano inserite nella stessa partizione e quindi memorizzate sullo stesso nodo worker, in modo da ridurre lo shuffling della successiva \verb|groupByKey|.
+
+\section{Analisi di scalabilità e risultati sperimentali} \label{sec:analisi-scalabilita}
+
+Per entrambe le implementazioni \verb|CoPurchaseAnalysisNoPartitioning| e \verb|CoPurchaseAnalysis| descritte in sezione \ref{sec:approccio-utilizzato}, è stata valutata la scalabilità tramite lo stesso esperimento.
+Entrambe le implementazioni sono state eseguite 4 volte, rispettivamente con un cluster Spark di 1, 2, 3, 4 nodi worker, misurando il tempo di esecuzione in secondi e calcolando \textit{speed up} e \textit{strong scaling efficiency}, i risultati sono riportati nelle tabelle \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning} e \ref{tab:scalabilità-CoPurchaseAnalysis}.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ccccc}
+        \hline
+        \textbf{workers} & \textbf{tempo di esecuzione} & \textbf{speed up} & \textbf{strong scaling efficiency} \\ 
+        \hline
+        1 & 14m 59s (899s) & - & - \\
+        2 & 7m 44s (464s) & 1.94 & 0.97 \\
+        3 & 7m 46s (466s) & 1.93 & 0.64 \\
+        4 & 7m 23s (443s) & 2.03 & 0.51 \\
+        \hline
+    \end{tabular}
+    \caption{Analisi di scalabilità di CoPurchaseAnalysisNoPartitioning}
+    \label{tab:scalabilità-CoPurchaseAnalysisNoPartitioning}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{cccc}
+        \hline
+        \textbf{workers} & \textbf{tempo di esecuzione} & \textbf{speed up} & \textbf{strong scaling efficiency} \\ 
+        \hline
+        1 & 11m 31s (691s) & - & - \\
+        2 & 7m 11s (431s) & 1.60 & 0.80 \\
+        3 & 5m 44s (344s) & 2.00 & 0.67 \\
+        4 & 4m 47s (287s) & 2.41 & 0.60 \\
+        \hline
+    \end{tabular}
+    \caption{Analisi di scalabilità di CoPurchaseAnalysis}
+    \label{tab:scalabilità-CoPurchaseAnalysis}
+\end{table}
+
+Per permettere la riproducibilità dei risultati tutte le macchine di ogni cluster su cui è stata effettuata una misurazione del tempo di esecuzione sono state scelte della tipologia \verb|n1-standard-4| e con installata l'immagine \verb|2.2.53-debian12|.
+Inoltre ogni cluster è stato creato nella regione \verb|europe-west2| e zona \verb|europe-west2-c|.
+Le macchine di tipologia \verb|n1-standard-4| sono della famiglia N serie 1 hanno 16G di memoria e 4 vCPU, maggiori dettagli si possono trovare nella documentazione di Google Cloud\footnote{https://cloud.google.com/compute/docs/machine-resource}.
+L'immagine \verb|2.2.53-debian12| ha preinstallato Apache Spark 3.5.3 e Scala 2.12.18, maggiori dettagli si possono trovare nella documentazione di Google Cloud\footnote{https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-release-2.2}.
+Inoltre l'esatta procedura su come ripetere le misurazioni è documentata nel file \verb|README.md| nel repository GitHub del progetto.
+
+\section{Discussione e conclusioni} \label{sec:discussione-e-conclusioni}
+
+Dalla tabella \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning} si osserva che \verb|CoPurchaseAnalysisNoPartitioning| non ha nessun beneficio nell'utilizzare più di due worker, poiché il tempo di esecuzione con 2, 3, 4 workers e anche lo speed up rimane circa lo stesso.
+Quindi \verb|CoPurchaseAnalysisNoPartitioning| è una implementazione che non scala.
+Invece \verb|CoPurchaseAnalysis| in tabella \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning}, trae beneficio dall'aumentare il numero di worker del cluster perché lo speed up aumenta e il tempo di esecuzione diminuisce drasticamente passando da 1 a 4 workers.
+Ciò che permette a \verb|CoPurchaseAnalysis| di scalare è proprio l'utilizzo del \verb|HashPartitioner| perché riduce lo shuffling causato dalla \verb|groupByKey| come spiegato in sezione \ref{sec:approccio-utilizzato}.
+
+\end{document}
+

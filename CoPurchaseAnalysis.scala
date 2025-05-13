@@ -29,7 +29,7 @@ object CoPurchaseAnalysis {
         val coPurchase = prod1IdProd2IdCountTriples.reduceByKey(_ + _)
             .map(p => s"${p._1._1},${p._1._2},${p._2}")
 
-        coPurchase.saveAsTextFile(outputPath)
+        coPurchase.repartition(1).saveAsTextFile(outputPath)
 
     }
 }

@@ -13,6 +13,8 @@ GCLOUD="${THIRDPARTY}/google-cloud-sdk/bin/gcloud"
 SPARK_JARS="${THIRDPARTY}/spark-${SPARK_VERSION}-bin-hadoop3/jars"
 
 CLOUD_STORAGE_BUCKET="gs://scalable-project-bucket"
+BUCKET_LOCATION="US"
+
 CLUSTER_NAME="rosita"
 CLUSTER_REGION="europe-west2"
 
