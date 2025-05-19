@@ -3,7 +3,15 @@ Co-purchase analysis project for Scalable and Cloud Programming course 2024-2025
 
 ## How to repeat the time measurements
 
-All measurements were taken on a Google Cloud Custer, using command line scripts launched from a GNU/Linux Debian 12 x86_64 machine.
+All measurements were taken on a Google Cloud Custer, using command line scripts launched from a GNU/Linux Debian 12 stable x86_64 machine.
+
+The following Debian 12 stable package are required:
+```
+sudo apt install \
+    git \
+    default-jre \
+    default-jdk
+```
 
 ```
 git clone https://github.com/llllluca/copurchase-scalable.git
@@ -16,6 +24,7 @@ This script creates the thrirdpary directory and downloads into it the Google Cl
 
 ```
 ./scripts/fetch-thirdparty.sh
+# It will take a while
 ```
 
 ### 2. Google Cloud login
@@ -24,7 +33,15 @@ Authenticate with your Google account.
 ./thirdparty/google-cloud-sdk/bin/gcloud auth login
 ```
 
-### 3. Create the Google Cloud bucket storage 
+### 3. Create and setup a new Google Cloud project
+Create a new project from the [Google Cloud Console](https://console.cloud.google.com/) interface following these [instructions](https://developers.google.com/workspace/guides/create-project) (you can keep empty the Location field).
+Then in a terminal type the following command to set the project, substitute `PROJECT_ID` with the actual project id.
+
+```
+./thirdparty/google-cloud-sdk/bin/gcloud config set project PROJECT_ID
+```
+
+### 4. Create the Google Cloud bucket storage 
 ```
 ./scripts/bucket-create.sh
 ```

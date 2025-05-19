@@ -25,7 +25,7 @@ Di seguito sono spiegate più in dettaglio le due implementazioni.
 In \verb|CoPurchaseAnalysisNoPartitioning| come prima cosa viene fatto parsing del dataset in formato csv in input ottenendo un RDD di coppie $(IdOrdine, IdProdotto)$, chiamiamo\\ \verb|orderIdProductId| questo RDD. Successivamente viene eseguito questo snippet di codice Scala-Spark.
 \begin{verbatim}
 val prod1IdProd2IdCounter = orderIdProductId.groupByKey()
-    .flatMap(p => for (x <- p._2; y <- p._2; if x < y) yield ((x, y), 1))
+    .flatMap(p => for (x <- p._2; y <- p._2 if x < y) yield ((x, y), 1))
 \end{verbatim}
 La \verb|groupByKey| trasforma \verb|orderIdProductId| in un nuovo RDD di coppie $(IdOrdine, l)$ dove $l$ è una collection iterabile di tutti e soli gli identificati di prodotti che appartengono allo stesso ordine.
 La successiva \verb|flatMap| produce un RDD di coppie $((IdProdotto1, IdProdotto2), 1)$ dove la prima componente della coppia è a sua volta una coppia di identificativi di prodotti che appartengono allo stesso ordine, mentre la seconda componente della coppia è un contatore inizializzato a 1.
@@ -38,7 +38,7 @@ Infine è stata applicata una \verb|reduceByKey(_ + _)| ottenendo così un RDD d
 val prod1IdProd2IdCounter = orderIdProductId
     .partitionBy(new HashPartitioner(partitionsNumber))
     .groupByKey()
-    .flatMap(p => for (x <- p._2; y <- p._2; if x < y) yield ((x, y), 1))
+    .flatMap(p => for (x <- p._2; y <- p._2 if x < y) yield ((x, y), 1))
 \end{verbatim}
 Il numero di partizioni \verb|partitionsNumber| è impostato a 2x il numero totale di core nel cluster.
 Impostare il numero di partizioni come il numero totale di core nel cluster per una costante moltiplicativa è suggerito nel articolo al seguente link\footnote{https://engineering.salesforce.com/how-to-optimize-your-apache-spark-application-with-partitions-257f2c1bb414/}.
@@ -90,10 +90,14 @@ Inoltre l'esatta procedura su come ripetere le misurazioni è documentata nel fi
 
 \section{Discussione e conclusioni} \label{sec:discussione-e-conclusioni}
 
-Dalla tabella \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning} si osserva che \verb|CoPurchaseAnalysisNoPartitioning| non ha nessun beneficio nell'utilizzare più di due worker, poiché il tempo di esecuzione con 2, 3, 4 workers e anche lo speed up rimane circa lo stesso.
-Quindi \verb|CoPurchaseAnalysisNoPartitioning| è una implementazione che non scala.
-Invece \verb|CoPurchaseAnalysis| in tabella \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning}, trae beneficio dall'aumentare il numero di worker del cluster perché lo speed up aumenta e il tempo di esecuzione diminuisce drasticamente passando da 1 a 4 workers.
-Ciò che permette a \verb|CoPurchaseAnalysis| di scalare è proprio l'utilizzo del \verb|HashPartitioner| perché riduce lo shuffling causato dalla \verb|groupByKey| come spiegato in sezione \ref{sec:approccio-utilizzato}.
+Dalla tabella \ref{tab:scalabilità-CoPurchaseAnalysisNoPartitioning} si osserva che \verb|CoPurchaseAnalysisNoPartitioning| non ha nessun beneficio nell'utilizzare più di due workers, poiché il tempo di esecuzione con 2, 3, 4 workers e anche lo speed up rimane circa lo stesso.
+% Quindi \verb|CoPurchaseAnalysisNoPartitioning| è una implementazione che non scala.
+Invece \verb|CoPurchaseAnalysis| in tabella \ref{tab:scalabilità-CoPurchaseAnalysis}, trae un maggiore beneficio dall'aumentare il numero di workers del cluster perché lo speed up aumenta e il tempo di esecuzione diminuisce molto passando da 1 a 4 workers.
+Ciò che permette a \verb|CoPurchaseAnalysis| di scalare in modo migliore rispetto a \verb|CoPurchaseAnalysisNoPartitioning| è proprio l'utilizzo del \verb|HashPartitioner| perché riduce lo shuffling causato dalla \verb|groupByKey| come spiegato in sezione \ref{sec:approccio-utilizzato}.
+Quindi \verb|CoPurchaseAnalysis| è sicuramente una migliore implementazione di \verb|CoPurchaseAnalysisNoPartitioning| per l'analisi di co-acquisto.
+
+Guardando la colonna strong scaling efficiency della tabella \ref{tab:scalabilità-CoPurchaseAnalysis} sceglierei un cluster di 2 workers per eseguire una analisi di co-acquisto con \verb|CoPurchaseAnalysis| su un altro diverso dataset di circa la stessa dimensione, perché con 3 o 4 workers la strong scaling efficiency scende molto sotto l'80\%. 
+Quando la strong scaling efficiency scende molto sotto l'80\% si stanno sprecando molte risorse del cluster e soldi per affittarlo, inoltre un minuto e mezzo o due minuti e mezzo di tempo di esecuzione un meno non giustificano l'utilizzo di 1 o 2 nodi workers in più per una task non time-critical come l'analisi di co-acquisto.
 
 \end{document}
 
